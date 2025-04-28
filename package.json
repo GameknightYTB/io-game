@@ -1,0 +1,13 @@
+{
+  "name": "echelle-io",
+  "version": "1.0.0",
+  "description": "Jeu .io où on grimpe une échelle",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4"
+  }
+}
