@@ -1,1 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Échelle.io</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #87ceeb; }
+    canvas { background: #eee; display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="600" height="800"></canvas>
+
+<audio id="pushSound" src="push.mp3"></audio>
+<audio id="hitSound" src="hit.mp3"></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const players = {};
+const obstacles = [];
+
+let myId = null;
+const speed = 5;
+
+socket.on('connect', () => {
+    myId = socket.id;
+});
+
+socket.on('currentPlayers', (currentPlayers) => {
+    Object.assign(players, currentPlayers);
+});
+
+socket.on('newPlayer', (player) => {
+    players[player.id] = player;
+});
+
+socket.on('playerDisconnected', (id) => {
+    delete players[id];
+});
+
+socket.on('state', (state) => {
+    Object.assign(players, state.players);
+    obstacles.length = 0;
+    obstacles.push(...state.obstacles);
+});
+
+socket.on('newObstacle', (obstacle) => {
+    obstacles.push(obstacle);
+});
+
+socket.on('pushed', () => {
+    document.getElementById('pushSound').play();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') socket.emit('move', 'left');
+    if (e.key === 'ArrowRight') socket.emit('move', 'right');
+    if (e.key === 'ArrowUp') socket.emit('move', 'up');
+    if (e.key === 'ArrowDown') socket.emit('move', 'down');
+    if (e.key === ' ') socket.emit('push');
+});
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Échelle
+    ctx.fillStyle = 'brown';
+    ctx.fillRect(270, 0, 60, canvas.height);
+
+    // Joueurs
+    for (const id in players) {
+        const player = players[id];
+        ctx.fillStyle = (id === myId) ? 'red' : 'blue';
+        ctx.fillRect(player.x - 15, player.y - 15, 30, 30);
+    }
+
+    // Obstacles
+    ctx.fillStyle = 'black';
+    for (const obstacle of obstacles) {
+        ctx.beginPath();
+        ctx.arc(obstacle.x, obstacle.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
 
